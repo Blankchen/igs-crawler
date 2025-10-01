@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "example": "node src/scripts/example-script.js"
+    "uof": "node src/scripts/uof.js"
   },
   "dependencies": {
     "puppeteer": "^24.22.3"
