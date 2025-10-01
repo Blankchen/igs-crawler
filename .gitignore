@@ -1,0 +1,26 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# Optional files
+.env
+.DS_Store
+
+# System Files
+.idea
+*.swp
+*.swo
+*.vscode
+
+chrome
+
+# Chrome profile
+chrome-profile
