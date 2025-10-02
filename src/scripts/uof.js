@@ -1,12 +1,7 @@
 import { getBrowserConfig } from "../config/shared.js";
+import { delay } from "../config/shared.js";
 
 const reasonText = `加班`;
-
-async function delay(time) {
-  return new Promise(function (resolve) {
-    setTimeout(resolve, time);
-  });
-}
 
 async function clickApplyForm(page) {
   try {
@@ -63,7 +58,6 @@ async function clickApplyForm(page) {
 }
 
 async function fillFormInNewTab(formPage) {
-  
   // Calculate yesterday's date
   const yesterday = new Date();
   yesterday.setDate(yesterday.getDate() - 1);
@@ -77,7 +71,7 @@ async function fillFormInNewTab(formPage) {
   console.log(`Setting date to: ${formattedDate}`);
 
   try {
-        // Wait for the iframe to load
+    // Wait for the iframe to load
     await formPage.waitForSelector("iframe", { timeout: 10000 });
 
     // Get the iframe element
@@ -94,16 +88,11 @@ async function fillFormInNewTab(formPage) {
 
     console.log("NewTab Successfully accessed Frame1 iframe");
 
-        // Wait for Frame2 to appear inside Frame1
-    await frame.waitForSelector(
-      "#content",
-      { timeout: 10000 }
-    );
+    // Wait for Frame2 to appear inside Frame1
+    await frame.waitForSelector("#content", { timeout: 10000 });
 
     // Get the iframe element inside Frame1
-    const frame2Element = await frame.$(
-      "#content"
-    );
+    const frame2Element = await frame.$("#content");
     if (!frame2Element) {
       throw new Error("NewTab Frame2 not found inside Frame1");
     }
@@ -140,12 +129,12 @@ async function fillFormInNewTab(formPage) {
     // Click the dropdown first to open it
     await frame2.click(timeDropdownSelector);
     await delay(500);
-    
+
     // Select the "18:30" option using evaluate
     await frame2.evaluate((selector) => {
       const dropdown = document.querySelector(selector);
       dropdown.value = "18:30";
-      dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+      dropdown.dispatchEvent(new Event("change", { bubbles: true }));
     }, timeDropdownSelector);
     console.log("Successfully selected 18:30 from the time dropdown");
 
@@ -157,12 +146,12 @@ async function fillFormInNewTab(formPage) {
     // Click the dropdown first to open it
     await frame2.click(time2DropdownSelector);
     await delay(500);
-    
+
     // Select the "20:30" option using evaluate
     await frame2.evaluate((selector) => {
       const dropdown = document.querySelector(selector);
       dropdown.value = "20:30";
-      dropdown.dispatchEvent(new Event('change', { bubbles: true }));
+      dropdown.dispatchEvent(new Event("change", { bubbles: true }));
     }, time2DropdownSelector);
     console.log("Successfully selected 20:30 from the time dropdown");
 
@@ -188,7 +177,7 @@ async function fillFormInNewTab(formPage) {
   }
 }
 
-(async () => {
+export async function main() {
   try {
     const browser = await getBrowserConfig();
 
@@ -205,7 +194,7 @@ async function fillFormInNewTab(formPage) {
 
     // Get the page object for the newly opened tab
     const formPage = await newTarget.page();
-    
+
     // Add a small delay to ensure page is fully ready
     await delay(3000);
 
@@ -217,7 +206,8 @@ async function fillFormInNewTab(formPage) {
     console.error("Main execution error:", error);
     process.exit(1);
   }
-})().catch(error => {
-  console.error("Unhandled promise rejection:", error);
-  process.exit(1);
-});
+}
+
+(async () => {
+  await main();
+})();

@@ -6,9 +6,11 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
-    "uof": "node src/scripts/uof.js"
+    "uof": "node src/scripts/uof.js",
+    "towergame": "node src/scripts/towergame.js"
   },
   "dependencies": {
+    "cron": "^4.3.3",
     "puppeteer": "^24.22.3"
   },
   "author": "",
