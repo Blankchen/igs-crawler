@@ -1,4 +1,4 @@
-import puppeteer from "puppeteer";
+import { getBrowserConfig } from "../config/shared.js";
 
 const reasonText = `加班`;
 
@@ -189,35 +189,35 @@ async function fillFormInNewTab(formPage) {
 }
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: [
-      "--remote-debugging-port=9222",
-      "--user-data-dir=./chrome-profile",
-      "--start-maximized",
-    ],
-    defaultViewport: null,
-  });
+  try {
+    const browser = await getBrowserConfig();
 
-  const page = await browser.newPage();
-  await page.goto("http://uof/UOF/");
+    const page = await browser.newPage();
+    await page.goto("http://uof/UOF/");
 
-  await clickApplyForm(page);
+    await clickApplyForm(page);
 
-  const pageTarget = page.target();
+    const pageTarget = page.target();
 
-  const newTarget = await browser.waitForTarget(
-    (target) => target.opener() === pageTarget
-  );
+    const newTarget = await browser.waitForTarget(
+      (target) => target.opener() === pageTarget
+    );
 
-  // Get the page object for the newly opened tab
-  const formPage = await newTarget.page();
-  
-  // Add a small delay to ensure page is fully ready
-  await delay(3000);
+    // Get the page object for the newly opened tab
+    const formPage = await newTarget.page();
+    
+    // Add a small delay to ensure page is fully ready
+    await delay(3000);
 
-  await fillFormInNewTab(formPage);
+    await fillFormInNewTab(formPage);
 
-  console.log("Form filling completed.");
-  // await browser.close(); // Keep browser open for debugging
-})();
+    console.log("Form filling completed.");
+    // await browser.close(); // Keep browser open for debugging
+  } catch (error) {
+    console.error("Main execution error:", error);
+    process.exit(1);
+  }
+})().catch(error => {
+  console.error("Unhandled promise rejection:", error);
+  process.exit(1);
+});

@@ -1,21 +1,14 @@
-import puppeteer from "puppeteer";
+import { getBrowserConfig } from "./config/shared.js";
 
 (async () => {
-  const browser = await puppeteer.launch({
-    headless: false,
-    args: [
-      "--remote-debugging-port=9222",
-      "--user-data-dir=./chrome-profile",
-      "--start-maximized",
-    ],
-    defaultViewport: null,
-  });
+  const browser = await getBrowserConfig();
 
   const page = await browser.newPage();
   await page.goto("https://webcase.towergame.com/");
   await clickApplyButton();
 
   let dialogShown = false;
+
 
   async function clickApplyButton() {
     // 點擊「案件申請」連結
