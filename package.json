@@ -6,6 +6,7 @@
   "type": "module",
   "scripts": {
     "start": "node src/index.js",
+    "all": "npm run uof && npm run towergame",
     "uof": "node src/scripts/uof.js",
     "towergame": "node src/scripts/towergame.js"
   },

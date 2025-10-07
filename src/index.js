@@ -1,7 +1,7 @@
 import { CronJob } from 'cron';
 
 const job = CronJob.from({
-	cronTime: '0 0 9 * * 1-5',
+	cronTime: '0 0 9 * * 2-5',
 	onTick: function () {
 		console.log('You will see this message every second');
     // uofMain();

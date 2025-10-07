@@ -4,9 +4,10 @@ export async function getBrowserConfig() {
   try {
     // Try to connect to existing browser first
     console.log("Attempting to connect to existing browser...");
-    
+    // const hostIp = "10.255.255.254"; // WSL2 IP
+    const hostIp = "127.0.0.1"; // Localhost IP
     // First, try to get the WebSocket endpoint from the browser
-    const response = await fetch("http://127.0.0.1:9222/json/version");
+    const response = await fetch(`http://${hostIp}:9222/json/version`);
     const data = await response.json();
     const browserWSEndpoint = data.webSocketDebuggerUrl;
     
