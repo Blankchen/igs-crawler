@@ -6,8 +6,8 @@ const job = CronJob.from({
 		console.log('You will see this message every second');
     // uofMain();
     // towergameMain();
-    import('./scripts/uof.js')
     import('./scripts/towergame.js')
+    import('./scripts/uof.js')
 	},
 	start: true,
 	timeZone: 'Asia/Taipei'

@@ -1,4 +1,6 @@
 import { getBrowserConfig } from "../config/shared.js";
+import { delay } from "../config/shared.js";
+
 // 組內事務 早會
 
 export async function main() {
@@ -66,11 +68,10 @@ export async function main() {
   }
 
   // 如果 3 秒內沒出現 dialog，直接填表單
-  setTimeout(() => {
-    if (!dialogShown) fillFormData();
-  }, 3000);
+  await delay(3000);
+  if (!dialogShown) await fillFormData();
 
-  // await browser.close(); // Keep browser open for debugging
+  await browser.disconnect(); // Keep browser open for debugging
 }
 
 (async () => {

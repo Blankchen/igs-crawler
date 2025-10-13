@@ -71,6 +71,8 @@ async function fillFormInNewTab(formPage) {
   console.log(`Setting date to: ${formattedDate}`);
 
   try {
+    await formPage.waitForSelector("form", { timeout: 10000 });
+
     // Wait for the iframe to load
     await formPage.waitForSelector("iframe", { timeout: 10000 });
 
@@ -201,7 +203,9 @@ export async function main() {
     await fillFormInNewTab(formPage);
 
     console.log("Form filling completed.");
-    // await browser.close(); // Keep browser open for debugging
+
+    await browser.disconnect(); // Keep browser open for debugging
+
   } catch (error) {
     console.error("Main execution error:", error);
     process.exit(1);
