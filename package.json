@@ -8,7 +8,9 @@
     "start": "node src/index.js",
     "all": "npm run uof && npm run towergame",
     "uof": "node src/scripts/uof.js",
-    "towergame": "node src/scripts/towergame.js"
+    "tg": "node src/scripts/towergame.js",
+    "log": "node src/scripts/log.js",
+    "chrome": ".\\chrome\\win64-141.0.7390.54\\chrome-win64\\chrome.exe --remote-debugging-port=9222 --user-data-dir=\"C:\\Users\\blankchen\\Documents\\work\\personal\\igs-crawler\\chrome-profile\""
   },
   "dependencies": {
     "cron": "^4.3.3",

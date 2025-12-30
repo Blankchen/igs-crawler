@@ -60,3 +60,6 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 ## License
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
+
+### 除錯模式啟動指令
+& "C:\Users\blankchen\Documents\work\personal\igs-crawler\chrome\win64-141.0.7390.54\chrome-win64\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\Users\blankchen\Documents\work\personal\igs-crawler\chrome-profile"
