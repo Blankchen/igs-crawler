@@ -15,43 +15,49 @@ async function clickApplyForm(page) {
     }
 
     // Get the content frame
-    const frame = await frameElement.contentFrame();
+    let frame = await frameElement.contentFrame();
     if (!frame) {
       throw new Error("Could not access iframe content");
     }
 
     console.log("Successfully accessed Frame1 iframe");
 
-    // Wait for Frame2 to appear inside Frame1
-    await frame.waitForSelector(
-      "#ctl00_ContentPlaceHolder1_RadDock6c726cf80423427f8678177cfd39f00b_C_widget_FlowList",
+    // The portal can resume a stale last-visited page (e.g. a notice/registration
+    // page) instead of Homepage.aspx. Force navigation back to the homepage.
+    if (!frame.url().includes("Homepage.aspx")) {
+      console.log("Frame1 not on Homepage, navigating via 我的首頁 link...");
+      await frame.evaluate(() => {
+        const link = Array.from(document.querySelectorAll("a")).find(
+          (a) => a.textContent.trim() === "我的首頁"
+        );
+        if (link) link.click();
+      });
+      await delay(2000);
+
+      const frameElementAfterNav = await page.$("#Frame1");
+      if (!frameElementAfterNav) {
+        throw new Error("Frame1 not found after navigating home");
+      }
+      frame = await frameElementAfterNav.contentFrame();
+      if (!frame) {
+        throw new Error("Could not access Frame1 content after navigating home");
+      }
+    }
+
+    // The apply-form link now lives directly on the homepage (no nested iframe widget)
+    await frame.waitForFunction(
+      () => Array.from(document.querySelectorAll("a")).some((a) => a.title === "加班單"),
       { timeout: 10000 }
     );
 
-    // Get the iframe element inside Frame1
-    const frame2Element = await frame.$(
-      "#ctl00_ContentPlaceHolder1_RadDock6c726cf80423427f8678177cfd39f00b_C_widget_FlowList"
-    );
-    if (!frame2Element) {
-      throw new Error("Frame2 not found inside Frame1");
-    }
-
-    // Get the content frame of Frame2
-    const frame2 = await frame2Element.contentFrame();
-    if (!frame2) {
-      throw new Error("Could not access Frame2 iframe content");
-    }
-
-    console.log("Successfully accessed Frame2 iframe inside Frame1");
-    await delay(1000);
-
-    await frame2.evaluate(async () => {
-      var $ = window.$;
-      // Select an element using jQuery and trigger a click event
-      $('a:contains("加班單")')[0].click();
-      // Or use .click() directly if it's a standard click handler
-      // $('a#my-link').click();
+    await frame.evaluate(() => {
+      const link = Array.from(document.querySelectorAll("a")).find(
+        (a) => a.title === "加班單"
+      );
+      link.click();
     });
+
+    console.log("Clicked 加班單 apply link");
   } catch (error) {
     console.error("Error occurred:", error.message);
   }
