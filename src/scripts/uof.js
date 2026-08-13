@@ -44,15 +44,29 @@ async function clickApplyForm(page) {
       }
     }
 
-    // The apply-form link now lives directly on the homepage (no nested iframe widget)
-    await frame.waitForFunction(
-      () => Array.from(document.querySelectorAll("a")).some((a) => a.title === "加班單"),
+    // The apply-form link lives inside the FlowList widget iframe on the homepage
+    const widgetSelector =
+      "#ctl00_ContentPlaceHolder1_RadDock6c726cf80423427f8678177cfd39f00b_C_widget_FlowList";
+    await frame.waitForSelector(widgetSelector, { timeout: 10000 });
+
+    const widgetElement = await frame.$(widgetSelector);
+    if (!widgetElement) {
+      throw new Error("FlowList widget iframe not found");
+    }
+
+    const widgetFrame = await widgetElement.contentFrame();
+    if (!widgetFrame) {
+      throw new Error("Could not access FlowList widget iframe content");
+    }
+
+    await widgetFrame.waitForFunction(
+      () => Array.from(document.querySelectorAll("a")).some((a) => a.textContent.trim() === "加班單"),
       { timeout: 10000 }
     );
 
-    await frame.evaluate(() => {
+    await widgetFrame.evaluate(() => {
       const link = Array.from(document.querySelectorAll("a")).find(
-        (a) => a.title === "加班單"
+        (a) => a.textContent.trim() === "加班單"
       );
       link.click();
     });
@@ -190,7 +204,7 @@ export async function main() {
     const browser = await getBrowserConfig();
 
     const page = await browser.newPage();
-    await page.goto("http://uof/UOF/");
+    await page.goto("https://hq.igs.com.tw/UOF/");
 
     await clickApplyForm(page);
 
