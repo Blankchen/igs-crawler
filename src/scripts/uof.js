@@ -44,32 +44,50 @@ async function clickApplyForm(page) {
       }
     }
 
-    // The apply-form link lives inside the FlowList widget iframe on the homepage
-    const widgetSelector =
-      "#ctl00_ContentPlaceHolder1_RadDock6c726cf80423427f8678177cfd39f00b_C_widget_FlowList";
-    await frame.waitForSelector(widgetSelector, { timeout: 10000 });
+    // The apply-form link's location has moved between homepage layouts before:
+    // sometimes it sits directly on the homepage, sometimes nested inside a
+    // dashboard widget iframe (e.g. a RadDock "FlowList" widget) whose id is
+    // randomly generated per-deployment. Rather than hardcode one layout,
+    // find whichever frame (the homepage itself or one of its iframes)
+    // currently contains the link.
+    const hasApplyLink = () =>
+      Array.from(document.querySelectorAll("a")).some(
+        (a) => a.textContent.trim() === "加班單" || a.title === "加班單"
+      );
 
-    const widgetElement = await frame.$(widgetSelector);
-    if (!widgetElement) {
-      throw new Error("FlowList widget iframe not found");
-    }
-
-    const widgetFrame = await widgetElement.contentFrame();
-    if (!widgetFrame) {
-      throw new Error("Could not access FlowList widget iframe content");
-    }
-
-    await widgetFrame.waitForFunction(
-      () => Array.from(document.querySelectorAll("a")).some((a) => a.textContent.trim() === "加班單"),
-      { timeout: 10000 }
-    );
-
-    await widgetFrame.evaluate(() => {
+    const clickApplyLink = () => {
       const link = Array.from(document.querySelectorAll("a")).find(
-        (a) => a.textContent.trim() === "加班單"
+        (a) => a.textContent.trim() === "加班單" || a.title === "加班單"
       );
       link.click();
-    });
+    };
+
+    const findFrameWithApplyLink = async () => {
+      if (await frame.evaluate(hasApplyLink)) {
+        return frame;
+      }
+      for (const iframeElement of await frame.$$("iframe")) {
+        const nestedFrame = await iframeElement.contentFrame();
+        if (!nestedFrame) continue;
+        const found = await nestedFrame.evaluate(hasApplyLink).catch(() => false);
+        if (found) return nestedFrame;
+      }
+      return null;
+    };
+
+    let targetFrame = null;
+    const deadline = Date.now() + 10000;
+    while (Date.now() < deadline) {
+      targetFrame = await findFrameWithApplyLink();
+      if (targetFrame) break;
+      await delay(500);
+    }
+
+    if (!targetFrame) {
+      throw new Error("Could not find 加班單 apply link on homepage or any nested widget iframe");
+    }
+
+    await targetFrame.evaluate(clickApplyLink);
 
     console.log("Clicked 加班單 apply link");
   } catch (error) {
