@@ -1,4 +1,4 @@
-import { getBrowserConfig } from "../config/shared.js";
+import { getBrowserConfig, releaseBrowser, isMainModule } from "../config/shared.js";
 import { delay } from "../config/shared.js";
 
 // 組內事務 早會
@@ -71,9 +71,10 @@ export async function main() {
   await delay(3000);
   if (!dialogShown) await fillFormData();
 
-  await browser.disconnect(); // Keep browser open for debugging
+  await releaseBrowser(browser); // Keep browser open for debugging
 }
 
-(async () => {
+// 直接執行（npm run tg）才自動跑；被 index.js import 時由排程呼叫 main()
+if (isMainModule(import.meta.url)) {
   await main();
-})();
+}

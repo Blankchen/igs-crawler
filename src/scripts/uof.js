@@ -1,4 +1,4 @@
-import { getBrowserConfig } from "../config/shared.js";
+import { getBrowserConfig, releaseBrowser, isMainModule } from "../config/shared.js";
 import { delay } from "../config/shared.js";
 
 const reasonText = `加班`;
@@ -242,14 +242,16 @@ export async function main() {
 
     console.log("Form filling completed.");
 
-    await browser.disconnect(); // Keep browser open for debugging
+    await releaseBrowser(browser); // Keep browser open for debugging
 
   } catch (error) {
     console.error("Main execution error:", error);
-    process.exit(1);
+    // 往外拋而不是 process.exit，避免常駐排程因單次失敗而整個結束
+    throw error;
   }
 }
 
-(async () => {
+// 直接執行（npm run uof）才自動跑；被 index.js import 時由排程呼叫 main()
+if (isMainModule(import.meta.url)) {
   await main();
-})();
+}

@@ -19,9 +19,6 @@ To get started, clone the repository and install the dependencies:
 git clone <repository-url>
 cd igs-crawler
 npm install
-
-# Download the latest available Chrome for Testing binary corresponding to the Stable channel.
-npx @puppeteer/browsers install chrome@stable
 ```
 
 ## Usage
@@ -61,5 +58,7 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
 
-### 除錯模式啟動指令
-& "C:\Users\blankchen\Documents\work\personal\igs-crawler\chrome\win64-141.0.7390.54\chrome-win64\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\Users\blankchen\Documents\work\personal\igs-crawler\chrome-profile"
+### 連線到日常使用的 Chrome
+1. 在 Chrome 開啟 `chrome://inspect/#remote-debugging`，勾選「Allow remote debugging for this browser instance」
+2. 執行腳本時 Chrome 會跳出允許視窗，按允許即可
+3. `npm start` 常駐排程只在啟動時連一次，之後重複使用同一條連線；Chrome 重開後需再允許一次

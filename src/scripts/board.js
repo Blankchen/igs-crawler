@@ -6,7 +6,7 @@ export async function main() {
   try {
     const browser = await getBrowserConfig();
     if (!browser) {
-      console.log("❌ Chrome 未開啟或無法連線 port 9222，請確認瀏覽器已以 --remote-debugging-port=9222 啟動");
+      console.log("❌ 無法連線 Chrome，請確認 chrome://inspect/#remote-debugging 已開啟並按下允許");
       process.exit(1);
     }
 

@@ -6,13 +6,8 @@ export async function main() {
     try {
         const browser = await getBrowserConfig();
         
-        // 直接連接到已開啟的頁面
-        const pageId = "5BC9F0F809DDDDB59067A39040A6003E";
-        const wsUrl = `ws://127.0.0.1:9222/devtools/page/${pageId}`;
-        
         console.log("=== 連接到已開啟的頁面 ===\n");
-        console.log(`WebSocket: ${wsUrl}\n`);
-        
+
         // 連接到現有的頁面
         const pages = await browser.pages();
         let targetPage = null;
