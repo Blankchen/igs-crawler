@@ -42,7 +42,8 @@ export async function main() {
 
     // 輸入今天日期加「組內事務」到 f_strCaseName
     const today = new Date();
-    const formatted = today.toISOString().slice(0, 10).replace(/-/g, "/"); // 2025/10/01
+    // 用本地時間組日期（toISOString 是 UTC，台灣 08:00 前會變成前一天）
+    const formatted = `${today.getFullYear()}/${String(today.getMonth() + 1).padStart(2, "0")}/${String(today.getDate()).padStart(2, "0")}`;
     await page.waitForSelector('input[name="f_strCaseName"]');
     await page.type('input[name="f_strCaseName"]', `${formatted} 組內事務`);
 
@@ -58,9 +59,10 @@ export async function main() {
       'input[type="checkbox"][name="f_nTaskNo"][id="f_nTaskNo17"]'
     );
 
-    // 填入「早會」到 f_strRemark textarea
+    // 備註：平日「早會」，週四加上「週會」
+    const remark = today.getDay() === 4 ? "早會、週會" : "早會";
     await page.waitForSelector('textarea[name="f_strRemark"]');
-    await page.type('textarea[name="f_strRemark"]', "早會");
+    await page.type('textarea[name="f_strRemark"]', remark);
 
     // 點擊「送出」按鈕
     // await page.waitForSelector('button.btn[type="button"]');

@@ -1,7 +1,41 @@
 import { getBrowserConfig, releaseBrowser, isMainModule } from "../config/shared.js";
 import { delay } from "../config/shared.js";
+import { computeOvertime, readCaseProgress, findProgress } from "./overtime.js";
 
-const reasonText = `加班`;
+// 參數：--date yyyy/MM/dd --start HH:mm --end HH:mm --reason 文字 --dry-run
+function parseArgs(argv) {
+  const opts = {};
+  for (let i = 0; i < argv.length; i++) {
+    const key = argv[i].replace(/^--/, "");
+    if (key === "dry-run") opts.dryRun = true;
+    else opts[key] = argv[++i];
+  }
+  return opts;
+}
+
+function formatDate(d) {
+  return `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, "0")}/${String(d.getDate()).padStart(2, "0")}`;
+}
+
+// 加班日期預設昨天；時段與項目依當天 git commit 推算，進度取 WebCase 個人看版
+async function buildPlan(browser, opts) {
+  const yesterday = new Date();
+  yesterday.setDate(yesterday.getDate() - 1);
+  const date = opts.date || formatDate(yesterday);
+  const ot = computeOvertime(date, { start: opts.start });
+
+  // 加班時段沒有 commit 時用預設時段（18:30～20:30）；當天完全沒有 commit 時項目填「加班」
+  const start = opts.start || ot.start;
+  const end = opts.end || ot.end;
+  let item = opts.reason || (ot.found ? null : "加班");
+  let detail = item;
+  if (!item) {
+    item = `${ot.ticket} ${ot.caseName}`;
+    const progress = findProgress(await readCaseProgress(browser), ot.caseName);
+    detail = progress === null ? item : `${item} ${progress}%`;
+  }
+  return { found: true, fallback: ot.fallback, date, start, end, item, detail, candidates: ot.candidates || [] };
+}
 
 async function clickApplyForm(page) {
   try {
@@ -95,16 +129,8 @@ async function clickApplyForm(page) {
   }
 }
 
-async function fillFormInNewTab(formPage) {
-  // Calculate yesterday's date
-  const yesterday = new Date();
-  yesterday.setDate(yesterday.getDate() - 1);
-  const formattedDate =
-    yesterday.getFullYear() +
-    "/" +
-    String(yesterday.getMonth() + 1).padStart(2, "0") +
-    "/" +
-    String(yesterday.getDate()).padStart(2, "0");
+async function fillFormInNewTab(formPage, plan) {
+  const formattedDate = plan.date;
 
   console.log(`Setting date to: ${formattedDate}`);
 
@@ -170,13 +196,9 @@ async function fillFormInNewTab(formPage) {
     await frame2.click(timeDropdownSelector);
     await delay(500);
 
-    // Select the "18:30" option using evaluate
-    await frame2.evaluate((selector) => {
-      const dropdown = document.querySelector(selector);
-      dropdown.value = "18:30";
-      dropdown.dispatchEvent(new Event("change", { bubbles: true }));
-    }, timeDropdownSelector);
-    console.log("Successfully selected 18:30 from the time dropdown");
+    // 選加班開始時間（選項不存在時報錯，不靜默填錯）
+    await selectTime(frame2, timeDropdownSelector, plan.start);
+    console.log(`Successfully selected ${plan.start} from the time dropdown`);
 
     // Wait for and select the time dropdown
     const time2DropdownSelector =
@@ -187,39 +209,57 @@ async function fillFormInNewTab(formPage) {
     await frame2.click(time2DropdownSelector);
     await delay(500);
 
-    // Select the "20:30" option using evaluate
-    await frame2.evaluate((selector) => {
-      const dropdown = document.querySelector(selector);
-      dropdown.value = "20:30";
-      dropdown.dispatchEvent(new Event("change", { bubbles: true }));
-    }, time2DropdownSelector);
-    console.log("Successfully selected 20:30 from the time dropdown");
+    // 選加班結束時間
+    await selectTime(frame2, time2DropdownSelector, plan.end);
+    console.log(`Successfully selected ${plan.end} from the time dropdown`);
 
     // Wait for and fill the textarea
     const textareaSelector =
       "#ctl00_ContentPlaceHolder1_VersionFieldCollectionUsingUC1_versionFieldUC12_tbxMultiLineText";
     await frame2.waitForSelector(textareaSelector, { timeout: 10000 });
 
-    // Type reasonText into the textarea
-    await frame2.type(textareaSelector, reasonText);
-    console.log("Successfully typed 'reasonText' into the textarea");
+    // 左欄：加班項目（工單號＋案件名稱）
+    await frame2.type(textareaSelector, plan.item);
+    console.log(`Successfully typed '${plan.item}' into the textarea`);
 
     // Wait for and fill the textarea
     const textarea2Selector =
       "#ctl00_ContentPlaceHolder1_VersionFieldCollectionUsingUC1_versionFieldUC13_tbxMultiLineText";
     await frame2.waitForSelector(textarea2Selector, { timeout: 10000 });
 
-    // Type reasonText into the textarea
-    await frame2.type(textarea2Selector, reasonText);
-    console.log("Successfully typed 'reasonText' into the textarea");
+    // 右欄：加班項目＋WebCase 目前進度
+    await frame2.type(textarea2Selector, plan.detail);
+    console.log(`Successfully typed '${plan.detail}' into the textarea`);
   } catch (error) {
     console.error("Error filling form fields:", error.message);
+    // 往外拋，避免欄位只填一半卻顯示「Form filling completed.」
+    throw error;
   }
 }
 
-export async function main() {
+async function selectTime(frame, selector, value) {
+  const ok = await frame.evaluate((sel, val) => {
+    const dropdown = document.querySelector(sel);
+    if (![...dropdown.options].some((o) => o.value === val)) return false;
+    dropdown.value = val;
+    dropdown.dispatchEvent(new Event("change", { bubbles: true }));
+    return true;
+  }, selector, value);
+  if (!ok) throw new Error(`時間下拉選單沒有 ${value} 這個選項`);
+}
+
+export async function main(opts = {}) {
   try {
     const browser = await getBrowserConfig();
+
+    const plan = await buildPlan(browser, opts);
+    if (plan.fallback) console.log(`${plan.date} ${plan.start} 之後沒有 commit，時段改用預設值`);
+    console.log(`加班單：${plan.date} ${plan.start}～${plan.end}｜${plan.item}｜${plan.detail}`);
+    if (opts.dryRun) {
+      console.log(JSON.stringify(plan.candidates, null, 2));
+      await releaseBrowser(browser);
+      return plan;
+    }
 
     const page = await browser.newPage();
     await page.goto("https://hq.igs.com.tw/UOF/");
@@ -238,7 +278,7 @@ export async function main() {
     // Add a small delay to ensure page is fully ready
     await delay(3000);
 
-    await fillFormInNewTab(formPage);
+    await fillFormInNewTab(formPage, plan);
 
     console.log("Form filling completed.");
 
@@ -253,5 +293,5 @@ export async function main() {
 
 // 直接執行（npm run uof）才自動跑；被 index.js import 時由排程呼叫 main()
 if (isMainModule(import.meta.url)) {
-  await main();
+  await main(parseArgs(process.argv.slice(2)));
 }
