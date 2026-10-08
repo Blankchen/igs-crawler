@@ -6,7 +6,7 @@ export async function main() {
   try {
     const browser = await getBrowserConfig();
     if (!browser) {
-      console.log("❌ 無法連線 Chrome，請確認 chrome://inspect/#remote-debugging 已開啟並按下允許");
+      console.log("❌ 無法連線 Chrome，請先執行 npm run chrome 並在該 Chrome 登入");
       process.exit(1);
     }
 

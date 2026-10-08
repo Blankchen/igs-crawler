@@ -58,7 +58,8 @@ Contributions are welcome! Please feel free to submit a pull request or open an 
 
 This project is licensed under the MIT License. See the LICENSE file for more details.
 
-### 連線到日常使用的 Chrome
-1. 在 Chrome 開啟 `chrome://inspect/#remote-debugging`，勾選「Allow remote debugging for this browser instance」
-2. 執行腳本時 Chrome 會跳出允許視窗，按允許即可
-3. `npm start` 常駐排程只在啟動時連一次，之後重複使用同一條連線；Chrome 重開後需再允許一次
+### 連線到自動化專用 Chrome（port 9222）
+1. 執行 `npm run chrome`，會以 `--remote-debugging-port=9222 --user-data-dir=C:\ChromeDebugProfile` 啟動一個獨立的 Chrome（已在執行則略過）
+2. 首次使用請在這個 Chrome 登入 webcase.towergame.com 等需要的網站；登入狀態保存在 `C:\ChromeDebugProfile`，之後不必重登
+3. 腳本透過 `http://127.0.0.1:9222` 連線，不會跳允許視窗；可用環境變數 `CHROME_DEBUG_URL`、`CHROME_PATH`、`CHROME_USER_DATA_DIR` 覆寫預設值
+4. 排程執行期間請保持這個 Chrome 開著

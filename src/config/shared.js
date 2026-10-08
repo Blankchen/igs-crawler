@@ -1,23 +1,18 @@
 import puppeteer from "puppeteer";
-import fs from "fs";
-import os from "os";
 import path from "path";
 import { fileURLToPath } from "url";
 
-// 日常使用的 Chrome（於 chrome://inspect/#remote-debugging 開啟遠端偵錯）
-// 此模式不提供 /json/version，port 也每次不同，需從 DevToolsActivePort 檔取得 WebSocket 位址
-async function connectToUserChrome() {
-  const localAppData = process.env.LOCALAPPDATA || path.join(os.homedir(), "AppData", "Local");
-  const portFile = path.join(localAppData, "Google", "Chrome", "User Data", "DevToolsActivePort");
-  const [port, wsPath] = fs.readFileSync(portFile, "utf8").trim().split(/\r?\n/);
-  const browserWSEndpoint = `ws://127.0.0.1:${port}${wsPath}`;
+// 自動化專用 Chrome 的遠端偵錯位址（由 npm run chrome 以 --remote-debugging-port=9222 啟動）
+export const CHROME_DEBUG_URL = process.env.CHROME_DEBUG_URL || "http://127.0.0.1:9222";
 
-  console.log(`Connecting to user Chrome: ${browserWSEndpoint}（請在 Chrome 跳出的視窗按允許）`);
+// 以 --remote-debugging-port 啟動的 Chrome 提供 /json/version，連線不會跳允許視窗
+async function connectToUserChrome() {
+  console.log(`Connecting to Chrome: ${CHROME_DEBUG_URL}`);
   const browser = await puppeteer.connect({
-    browserWSEndpoint,
+    browserURL: CHROME_DEBUG_URL,
     defaultViewport: null,
   });
-  console.log("Successfully connected to user Chrome");
+  console.log("Successfully connected to Chrome");
   return browser;
 }
 
@@ -67,7 +62,7 @@ async function connectBrowser() {
   try {
     return await connectToUserChrome();
   } catch (error) {
-    console.log("Could not connect to user Chrome，請確認 chrome://inspect/#remote-debugging 已開啟並按下允許");
+    console.log(`Could not connect to Chrome（${CHROME_DEBUG_URL}），請先執行 npm run chrome`);
     console.error("Connection error:", error.message);
   }
 }

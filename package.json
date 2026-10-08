@@ -10,7 +10,7 @@
     "uof": "node src/scripts/uof.js",
     "tg": "node src/scripts/towergame.js",
     "board": "node src/scripts/board.js",
-    "log": "node src/scripts/log.js"
+    "chrome": "node src/scripts/chrome.js"
   },
   "dependencies": {
     "cron": "^4.3.3",
